@@ -73,7 +73,7 @@
         </div>
     </section>
 
-    <!-- SOS Button -->
+    <!-- SOS Buttons -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
@@ -94,11 +94,11 @@
         window.onload = function () {
             const userName = localStorage.getItem('userName') || "User Name";
             const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
-
             document.getElementById('userName').innerText = userName;
             document.getElementById('userPhone').innerText = userPhone;
         };
 
+        // SOS BUTTON (SEND LOCATION)
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
 
@@ -138,34 +138,55 @@
             }
         });
 
+        // RECORD AUDIO AND SEND TO WHATSAPP
         document.getElementById("recordButton").addEventListener("click", function () {
             let chunks = [];
             navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
                 let recorder = new MediaRecorder(stream);
                 recorder.start();
+                alert("Recording started. Speak now...");
+
                 setTimeout(() => {
                     recorder.stop();
+                    alert("Recording stopped. Sending...");
                 }, 10000);
 
-                recorder.ondataavailable = (event) => {
+                recorder.ondataavailable = async (event) => {
                     chunks.push(event.data);
-                    let blob = new Blob(chunks, { type: 'audio/mp3' });
-                    let url = URL.createObjectURL(blob);
-                    let a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'sos_recording.mp3';
-                    a.click();
-                    
-                    let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nAudio Evidence Attached.`;
-                    let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
-                    relatives.slice(0, 3).forEach((rel) => {
-                        let phoneNumber = rel.phone.replace(/\s+/g, '');
-                        let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                        window.open(whatsappURL, "_blank");
+                    let blob = new Blob(chunks, { type: "audio/mp3" });
+
+                    let formData = new FormData();
+                    formData.append("file", blob, "sos_audio.mp3");
+
+                    // Upload to File.io
+                    fetch("https://file.io", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            let fileLink = data.link;
+                            let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nAudio Evidence:\n${fileLink}`;
+                            let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
+
+                            relatives.slice(0, 3).forEach((rel) => {
+                                let phoneNumber = rel.phone.replace(/\s+/g, '');
+                                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                                window.open(whatsappURL, "_blank");
+                            });
+
+                        } else {
+                            alert("Failed to upload audio. Try again.");
+                        }
                     });
                 };
+            }).catch((error) => {
+                alert("Microphone access denied!");
+                console.error(error);
             });
         });
+
     </script>
 </body>
 </html>
