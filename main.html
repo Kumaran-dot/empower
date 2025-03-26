@@ -23,6 +23,14 @@
             animation: float 6s linear infinite;
         }
 
+        /* Generate multiple bubbles */
+        .bubble:nth-child(1) { left: 10%; animation-duration: 7s; }
+        .bubble:nth-child(2) { left: 25%; width: 25px; height: 25px; animation-duration: 8s; }
+        .bubble:nth-child(3) { left: 40%; width: 35px; height: 35px; animation-duration: 5s; }
+        .bubble:nth-child(4) { left: 55%; animation-duration: 6s; }
+        .bubble:nth-child(5) { left: 70%; width: 28px; height: 28px; animation-duration: 7s; }
+        .bubble:nth-child(6) { left: 85%; width: 20px; height: 20px; animation-duration: 6s; }
+
         body {
             overflow: hidden;
             position: relative;
@@ -55,10 +63,12 @@
         <div class="bubble"></div>
     </div>
 
+    <!-- Header -->
     <header class="header">
         <h1>EmpowerHer</h1>
     </header>
 
+    <!-- Profile Section -->
     <section class="profile-section">
         <div class="profile-container">
             <div class="profile">
@@ -70,7 +80,9 @@
             </div>
         </div>
     </section>
-    <button id="sosButton" class="sos-button" onclick="sendSOS()">🚨 SOS</button>
+
+    <!-- SOS Button -->
+    <button id="sosButton" class="sos-button">🚨 SOS</button>
 
     <!-- Options Grid -->
     <section class="options-grid">
@@ -85,7 +97,47 @@
         <div class="option big-option" onclick="window.location.href='index.html'">↩<span>Log Out</span></div>
     </section>
 
+    <!-- Content Section (Dynamically Loaded) -->
+    <section id="contentSection" class="content" style="display: none;">
+        <button class="back-btn" onclick="goBack()">⬅ Back</button>
+        <h2 id="contentTitle"></h2>
+        <p id="contentText"></p>
+    </section>
+
     <script>
+        function goBack() {
+            document.getElementById("contentSection").style.display = "none";
+            document.querySelector(".options-grid").style.display = "grid";
+        }
+
+        function loadContent(page) {
+            const contentData = {
+                "feedback": { title: "Feedback Matters", text: "Your feedback helps improve security features." },
+                "legal": { title: "Know Your Rights", text: "Understanding legal rights can empower you in difficult situations." },
+                "help": { title: "Get Help When Needed", text: "Use SOS alerts or contact emergency numbers in an emergency." }
+            };
+
+            document.getElementById("contentTitle").innerText = contentData[page].title;
+            document.getElementById("contentText").innerText = contentData[page].text;
+
+            document.getElementById("contentSection").style.display = "block";
+            document.querySelector(".options-grid").style.display = "none";
+        }
+
+        function redirectToTrackMe() {
+            window.location.href = "location.html";
+        }
+
+        // Load user data from localStorage
+        window.onload = function () {
+            const userName = localStorage.getItem('userName') || "User Name";
+            const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
+
+            document.getElementById('userName').innerText = userName;
+            document.getElementById('userPhone').innerText = userPhone;
+        };
+
+        // SOS Button - Send Live Location via WhatsApp
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
 
@@ -95,21 +147,11 @@
             }
 
             let emergencyContact = friends[0]; 
-            let relatives = emergencyContact.relatives || []; 
+            let phoneNumber = emergencyContact.userPhone.replace(/\s+/g, ''); 
 
-            if (relatives.length < 3) {
-                alert("You must have at least 3 relatives added to send an SOS message.");
+            if (!phoneNumber) {
+                alert("No valid phone number found!");
                 return;
-            }
-
-            function sendSOSMessage(phoneNumber, latitude, longitude, delay) {
-                setTimeout(() => {
-                    let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                    let message = `🚨 *SOS Alert!* 🚨\nI need help! My current location:\n${mapsLink}`;
-                    let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                    
-                    window.open(whatsappURL, "_blank");
-                }, delay);
             }
 
             if (navigator.geolocation) {
@@ -117,11 +159,12 @@
                     (position) => {
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
+                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                        
+                        let message = `🚨 *SOS Alert!* 🚨\nI need help! My current location:\n${mapsLink}`;
+                        let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
-                        for (let i = 0; i < 3; i++) {
-                            let phoneNumber = relatives[i].phone.replace(/\s+/g, '');
-                            sendSOSMessage(phoneNumber, latitude, longitude, i * 3000);
-                        }
+                        window.location.href = whatsappURL;
                     },
                     () => {
                         alert("Location access denied! Please enable GPS.");
@@ -132,5 +175,6 @@
             }
         });
     </script>
+
 </body>
 </html>
