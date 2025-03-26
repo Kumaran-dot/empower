@@ -75,6 +75,7 @@
 
     <!-- SOS Button -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
+    <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
     <!-- Options Grid -->
     <section class="options-grid">
@@ -82,7 +83,7 @@
         <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
         <div class="option big-option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍<span>Feedback</span></div>
         <div class="option big-option" onclick="window.location.href='laws.html'">📄<span>Legal</span></div>
-        <div class="option big-option" id="helpButton">🆘<span>Help</span></div>
+        <div class="option big-option" onclick="loadContent('help')">🆘<span>Help</span></div>
         <div class="option big-option" onclick="window.location.href='helpline.html'">📞<span>Helpline</span></div>
         <div class="option big-option" onclick="window.location.href='about.html'">📖<span>About</span></div>
         <div class="option big-option" onclick="window.location.href='friends.html'">🤝<span>Friends</span></div>
@@ -93,39 +94,77 @@
         window.onload = function () {
             const userName = localStorage.getItem('userName') || "User Name";
             const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
+
             document.getElementById('userName').innerText = userName;
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        document.getElementById("helpButton").addEventListener("click", function () {
-            let mediaRecorder;
-            let audioChunks = [];
+        document.getElementById("sosButton").addEventListener("click", function () {
+            let friends = JSON.parse(localStorage.getItem("friends")) || [];
 
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    mediaRecorder = new MediaRecorder(stream);
-                    mediaRecorder.start();
+            if (friends.length === 0) {
+                alert("No trusted contacts found! Please add a contact first.");
+                return;
+            }
 
-                    mediaRecorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                    };
+            let emergencyContact = friends[0]; // First saved contact
+            let relatives = emergencyContact.relatives || []; // Get relatives list
 
-                    setTimeout(() => {
-                        mediaRecorder.stop();
-                    }, 10000);
+            if (relatives.length < 3) {
+                alert("You must have at least 3 relatives added to send an SOS message.");
+                return;
+            }
 
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        const audioURL = URL.createObjectURL(audioBlob);
-                        const a = document.createElement('a');
-                        a.href = audioURL;
-                        a.download = 'sos_audio.wav';
-                        a.click();
-                    };
-                })
-                .catch(error => {
-                    alert("Microphone access denied!");
-                });
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let latitude = position.coords.latitude;
+                        let longitude = position.coords.longitude;
+                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My current location:\n${mapsLink}`;
+
+                        relatives.slice(0, 3).forEach((rel) => {
+                            let phoneNumber = rel.phone.replace(/\s+/g, '');
+                            let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                            window.open(whatsappURL, "_blank");
+                        });
+                    },
+                    () => {
+                        alert("Location access denied! Please enable GPS.");
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        });
+
+        document.getElementById("recordButton").addEventListener("click", function () {
+            let chunks = [];
+            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                let recorder = new MediaRecorder(stream);
+                recorder.start();
+                setTimeout(() => {
+                    recorder.stop();
+                }, 10000);
+
+                recorder.ondataavailable = (event) => {
+                    chunks.push(event.data);
+                    let blob = new Blob(chunks, { type: 'audio/mp3' });
+                    let url = URL.createObjectURL(blob);
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'sos_recording.mp3';
+                    a.click();
+                    
+                    let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nAudio Evidence Attached.`;
+                    let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
+                    relatives.slice(0, 3).forEach((rel) => {
+                        let phoneNumber = rel.phone.replace(/\s+/g, '');
+                        let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                        window.open(whatsappURL, "_blank");
+                    });
+                };
+            });
         });
     </script>
 </body>
