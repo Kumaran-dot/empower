@@ -103,15 +103,21 @@
             // Retrieve friends list from localStorage
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
 
+            console.log("Stored Friends Data:", friends); // Debugging log
+
             // Find the first relative's phone number
             let firstRelativePhone = null;
             if (friends.length > 0 && friends[0].relatives.length > 0) {
-                firstRelativePhone = friends[0].relatives[0].phone;
+                firstRelativePhone = friends[0].relatives[0].phone.trim(); // Ensure number is trimmed
+                console.log("Calling:", firstRelativePhone); // Debugging log
             }
 
             if (firstRelativePhone) {
-                // If a relative exists, enable calling
+                // If a relative exists, call them
                 callBtn.href = `tel:${firstRelativePhone}`;
+                callBtn.addEventListener("click", function () {
+                    console.log(`Dialing ${firstRelativePhone}`); // Debugging log
+                });
             } else {
                 // If no relative exists, show an alert when clicking
                 callBtn.addEventListener("click", function (event) {
