@@ -23,14 +23,6 @@
             animation: float 6s linear infinite;
         }
 
-        /* Generate multiple bubbles */
-        .bubble:nth-child(1) { left: 10%; animation-duration: 7s; }
-        .bubble:nth-child(2) { left: 25%; width: 25px; height: 25px; animation-duration: 8s; }
-        .bubble:nth-child(3) { left: 40%; width: 35px; height: 35px; animation-duration: 5s; }
-        .bubble:nth-child(4) { left: 55%; animation-duration: 6s; }
-        .bubble:nth-child(5) { left: 70%; width: 28px; height: 28px; animation-duration: 7s; }
-        .bubble:nth-child(6) { left: 85%; width: 20px; height: 20px; animation-duration: 6s; }
-
         body {
             overflow: hidden;
             position: relative;
@@ -137,7 +129,7 @@
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        // SOS Button - Send Live Location via WhatsApp
+        // SOS Button - Send Live Location to 3 Relatives
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
 
@@ -146,12 +138,21 @@
                 return;
             }
 
-            let emergencyContact = friends[0]; 
-            let phoneNumber = emergencyContact.userPhone.replace(/\s+/g, ''); 
+            let emergencyContact = friends[0]; // First saved contact
+            let relatives = emergencyContact.relatives || []; // Get relatives list
 
-            if (!phoneNumber) {
-                alert("No valid phone number found!");
+            if (relatives.length < 3) {
+                alert("You must have at least 3 relatives added to send an SOS message.");
                 return;
+            }
+
+            // Function to send message via WhatsApp
+            function sendSOSMessage(phoneNumber, latitude, longitude) {
+                let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                let message = `🚨 *SOS Alert!* 🚨\nI need help! My current location:\n${mapsLink}`;
+                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                
+                window.open(whatsappURL, "_blank"); // Open in new tab
             }
 
             if (navigator.geolocation) {
@@ -159,12 +160,12 @@
                     (position) => {
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
-                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        
-                        let message = `🚨 *SOS Alert!* 🚨\nI need help! My current location:\n${mapsLink}`;
-                        let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
-                        window.location.href = whatsappURL;
+                        // Send messages to the first three relatives
+                        for (let i = 0; i < 3; i++) {
+                            let phoneNumber = relatives[i].phone.replace(/\s+/g, '');
+                            sendSOSMessage(phoneNumber, latitude, longitude);
+                        }
                     },
                     () => {
                         alert("Location access denied! Please enable GPS.");
