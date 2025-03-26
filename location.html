@@ -73,10 +73,9 @@
         </div>
     </div>
     <div class="bottom-menu">
-       
         <a href="#"><i class="fa fa-video"></i><br>Record</a>
         <a href="#" class="trackme-btn"><i class="fa fa-map-marker-alt"></i><br>Track Me</a>
-        <a href="#"><i class="fa fa-phone"></i><br> Call</a>
+        <a href="#" id="callButton"><i class="fa fa-phone"></i><br> Call</a>
         <a href="#"><i class="fa fa-question-circle"></i><br>Help</a>
     </div>
 
@@ -95,9 +94,32 @@
 
         // Call showLocation on page load
         showLocation();
-
         // Refresh location every 30 seconds
         setInterval(showLocation, 30000);
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const callBtn = document.getElementById("callButton");
+
+            // Retrieve friends list from localStorage
+            let friends = JSON.parse(localStorage.getItem("friends")) || [];
+
+            // Find the first relative's phone number
+            let firstRelativePhone = null;
+            if (friends.length > 0 && friends[0].relatives.length > 0) {
+                firstRelativePhone = friends[0].relatives[0].phone;
+            }
+
+            if (firstRelativePhone) {
+                // If a relative exists, enable calling
+                callBtn.href = `tel:${firstRelativePhone}`;
+            } else {
+                // If no relative exists, show an alert when clicking
+                callBtn.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    alert("No emergency contact found! Please add a relative first.");
+                });
+            }
+        });
     </script>
 </body>
 </html>
