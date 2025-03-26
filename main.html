@@ -89,47 +89,7 @@
         <div class="option big-option" onclick="window.location.href='index.html'">↩<span>Log Out</span></div>
     </section>
 
-    <!-- Content Section (Dynamically Loaded) -->
-    <section id="contentSection" class="content" style="display: none;">
-        <button class="back-btn" onclick="goBack()">⬅ Back</button>
-        <h2 id="contentTitle"></h2>
-        <p id="contentText"></p>
-    </section>
-
     <script>
-        function goBack() {
-            document.getElementById("contentSection").style.display = "none";
-            document.querySelector(".options-grid").style.display = "grid";
-        }
-
-        function loadContent(page) {
-            const contentData = {
-                "feedback": { title: "Feedback Matters", text: "Your feedback helps improve security features." },
-                "legal": { title: "Know Your Rights", text: "Understanding legal rights can empower you in difficult situations." },
-                "help": { title: "Get Help When Needed", text: "Use SOS alerts or contact emergency numbers in an emergency." }
-            };
-
-            document.getElementById("contentTitle").innerText = contentData[page].title;
-            document.getElementById("contentText").innerText = contentData[page].text;
-
-            document.getElementById("contentSection").style.display = "block";
-            document.querySelector(".options-grid").style.display = "none";
-        }
-
-        function redirectToTrackMe() {
-            window.location.href = "location.html";
-        }
-
-        // Load user data from localStorage
-        window.onload = function () {
-            const userName = localStorage.getItem('userName') || "User Name";
-            const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
-
-            document.getElementById('userName').innerText = userName;
-            document.getElementById('userPhone').innerText = userPhone;
-        };
-
-        // SOS Button - Send Live Location to 3 Relatives
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
 
@@ -146,26 +106,23 @@
                 return;
             }
 
-            // Function to send message via WhatsApp
-            function sendSOSMessage(phoneNumber, latitude, longitude) {
-                let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                let message = `🚨 *SOS Alert!* 🚨\nI need help! My current location:\n${mapsLink}`;
-                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                
-                window.open(whatsappURL, "_blank"); // Open in new tab
-            }
-
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
+                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                        let message = `🚨 *SOS Alert!* 🚨\nI need help! My current location:\n${mapsLink}`;
 
-                        // Send messages to the first three relatives
-                        for (let i = 0; i < 3; i++) {
-                            let phoneNumber = relatives[i].phone.replace(/\s+/g, '');
-                            sendSOSMessage(phoneNumber, latitude, longitude);
-                        }
+                        // Send messages to the first three relatives via WhatsApp and SMS
+                        relatives.slice(0, 3).forEach((rel) => {
+                            let phoneNumber = rel.phone.replace(/\s+/g, '');
+                            let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                            window.open(whatsappURL, "_blank");
+                            
+                            let smsURL = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+                            window.open(smsURL, "_blank");
+                        });
                     },
                     () => {
                         alert("Location access denied! Please enable GPS.");
@@ -176,6 +133,5 @@
             }
         });
     </script>
-
 </body>
 </html>
