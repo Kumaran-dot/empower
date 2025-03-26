@@ -90,6 +90,14 @@
     </section>
 
     <script>
+        window.onload = function () {
+            const userName = localStorage.getItem('userName') || "User Name";
+            const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
+
+            document.getElementById('userName').innerText = userName;
+            document.getElementById('userPhone').innerText = userPhone;
+        };
+
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
 
