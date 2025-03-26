@@ -82,7 +82,7 @@
         <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
         <div class="option big-option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍<span>Feedback</span></div>
         <div class="option big-option" onclick="window.location.href='laws.html'">📄<span>Legal</span></div>
-        <div class="option big-option" onclick="loadContent('help')">🆘<span>Help</span></div>
+        <div class="option big-option" id="helpButton">🆘<span>Help</span></div>
         <div class="option big-option" onclick="window.location.href='helpline.html'">📞<span>Helpline</span></div>
         <div class="option big-option" onclick="window.location.href='about.html'">📖<span>About</span></div>
         <div class="option big-option" onclick="window.location.href='friends.html'">🤝<span>Friends</span></div>
@@ -93,52 +93,39 @@
         window.onload = function () {
             const userName = localStorage.getItem('userName') || "User Name";
             const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
-
             document.getElementById('userName').innerText = userName;
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        document.getElementById("sosButton").addEventListener("click", function () {
-            let friends = JSON.parse(localStorage.getItem("friends")) || [];
+        document.getElementById("helpButton").addEventListener("click", function () {
+            let mediaRecorder;
+            let audioChunks = [];
 
-            if (friends.length === 0) {
-                alert("No trusted contacts found! Please add a contact first.");
-                return;
-            }
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
 
-            let emergencyContact = friends[0]; // First saved contact
-            let relatives = emergencyContact.relatives || []; // Get relatives list
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
 
-            if (relatives.length < 3) {
-                alert("You must have at least 3 relatives added to send an SOS message.");
-                return;
-            }
+                    setTimeout(() => {
+                        mediaRecorder.stop();
+                    }, 10000);
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        let latitude = position.coords.latitude;
-                        let longitude = position.coords.longitude;
-                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My current location:\n${mapsLink}`;
-
-                        // Send messages to the first three relatives via WhatsApp and SMS
-                        relatives.slice(0, 3).forEach((rel) => {
-                            let phoneNumber = rel.phone.replace(/\s+/g, '');
-                            let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                            window.open(whatsappURL, "_blank");
-                            
-                            let smsURL = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
-                            window.open(smsURL, "_blank");
-                        });
-                    },
-                    () => {
-                        alert("Location access denied! Please enable GPS.");
-                    }
-                );
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioURL = URL.createObjectURL(audioBlob);
+                        const a = document.createElement('a');
+                        a.href = audioURL;
+                        a.download = 'sos_audio.wav';
+                        a.click();
+                    };
+                })
+                .catch(error => {
+                    alert("Microphone access denied!");
+                });
         });
     </script>
 </body>
