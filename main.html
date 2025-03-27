@@ -73,7 +73,7 @@
         </div>
     </section>
 
-    <!-- SOS Button -->
+    <!-- SOS & Record Button -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
@@ -93,7 +93,6 @@
         window.onload = function () {
             const userName = localStorage.getItem('userName') || "User Name";
             const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
-
             document.getElementById('userName').innerText = userName;
             document.getElementById('userPhone').innerText = userPhone;
         };
@@ -106,8 +105,8 @@
                 return;
             }
 
-            let emergencyContact = friends[0]; // First saved contact
-            let relatives = emergencyContact.relatives || []; // Get relatives list
+            let emergencyContact = friends[0];
+            let relatives = emergencyContact.relatives || [];
 
             if (relatives.length < 3) {
                 alert("You must have at least 3 relatives added to send an SOS message.");
@@ -120,7 +119,7 @@
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
                         let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My current location:\n${mapsLink}`;
+                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My location:\n${mapsLink}`;
 
                         relatives.slice(0, 3).forEach((rel) => {
                             let phoneNumber = rel.phone.replace(/\s+/g, '');
@@ -156,30 +155,17 @@
                     let formData = new FormData();
                     formData.append("file", blob, "sos_audio.mp3");
 
-                    // **Step 1: Get the GoFile.io server URL**
-                    fetch("https://api.gofile.io/getServer")
-                    .then(response => response.json())
-                    .then(serverData => {
-                        let server = serverData.data.server;
-                        let uploadURL = `https://${server}.gofile.io/uploadFile`;
-
-                        // **Step 2: Upload the audio to the fetched GoFile server**
-                        return fetch(uploadURL, { method: "POST", body: formData });
+                    // Upload to GoFile.io
+                    fetch("https://store1.gofile.io/uploadFile", {
+                        method: "POST",
+                        body: formData
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === "ok") {
                             let fileLink = data.data.downloadPage;
-                            let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\n🎤 Audio Evidence:\n${fileLink}`;
-                            let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
-
-                            // **Step 3: Send the WhatsApp alert**
-                            relatives.slice(0, 3).forEach((rel) => {
-                                let phoneNumber = rel.phone.replace(/\s+/g, '');
-                                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                                window.open(whatsappURL, "_blank");
-                            });
-
+                            let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\n🎤 Audio Evidence: ${fileLink}`;
+                            sendSMS(message);
                         } else {
                             alert("❌ Failed to upload audio. Try again.");
                         }
@@ -193,6 +179,25 @@
                 console.error(error);
             });
         });
+
+        function sendSMS(message) {
+            let friends = JSON.parse(localStorage.getItem("friends")) || [];
+            if (friends.length === 0) {
+                alert("No trusted contacts found!");
+                return;
+            }
+
+            let emergencyContact = friends[0];
+            let relatives = emergencyContact.relatives || [];
+
+            relatives.slice(0, 3).forEach((rel) => {
+                let phoneNumber = rel.phone.replace(/\s+/g, '');
+                let smsURL = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+                window.open(smsURL, "_blank");
+            });
+
+            alert("📩 Audio link sent via SMS!");
+        }
     </script>
 </body>
 </html>
