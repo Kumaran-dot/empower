@@ -153,14 +153,9 @@
                         return;
                     }
 
-                    let message = `🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
+                    let message = `🚨 *SOS Alert! Audio From EmpoerHer* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
 
-                    // Open SMS with the link
-                    let smsNumber = relatives[0]?.phone.replace(/\s+/g, '');
-                    let smsURL = `sms:${smsNumber}?body=${encodeURIComponent(message)}`;
-                    window.open(smsURL, "_blank");
-
-                    // Send WhatsApp messages
+                    // ✅ Send ONLY to WhatsApp (No SMS)
                     relatives.slice(0, 3).forEach((rel) => {
                         let phoneNumber = rel.phone.replace(/\s+/g, '');
                         let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
