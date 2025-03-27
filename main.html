@@ -5,55 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpowerHer - Women's Safety</title>
     <link rel="stylesheet" href="styleformain.css">
-    <style>
-        /* Floating Bubble Effect */
-        @keyframes float {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-        }
-
-        .bubble {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: radial-gradient(circle, #ff4081, #6a1b9a);
-            opacity: 0.6;
-            border-radius: 50%;
-            animation: float 6s linear infinite;
-        }
-
-        body {
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* SOS Button */
-        .sos-button {
-            display: block;
-            width: 200px;
-            margin: 20px auto;
-            padding: 15px;
-            background: red;
-            color: white;
-            font-size: 20px;
-            text-align: center;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-    </style>
 </head>
 <body>
-    <!-- Bubble Animation Background -->
-    <div class="bubbles">
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-    </div>
 
     <!-- Header -->
     <header class="header">
@@ -77,7 +30,7 @@
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
-    <!-- Options Grid -->
+    <!-- Options Grid (OLD BUTTONS ARE BACK!) -->
     <section class="options-grid">
         <div class="option big-option" onclick="window.location.href='location.html'">📍<span>TrackMe</span></div>
         <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
@@ -97,75 +50,49 @@
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        // 🚨 SOS Button Logic
-        document.getElementById("sosButton").addEventListener("click", function () {
+        // 🎤 Record & Send Audio via Vocaroo
+        document.getElementById("recordButton").addEventListener("click", function () {
+            window.open("https://vocaroo.com/", "_blank"); // Open Vocaroo
+
+            setTimeout(() => {
+                let vocarooLink = prompt("Paste the Vocaroo audio link:");
+                if (vocarooLink && vocarooLink.startsWith("https://voca.ro/")) {
+                    sendToWhatsApp(vocarooLink);
+                } else {
+                    alert("Invalid Vocaroo link! Please enter a valid link.");
+                }
+            }, 3000); // Delay to ensure user pastes the link
+        });
+
+        function sendToWhatsApp(vocarooLink) {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
             if (friends.length === 0) {
-                alert("No trusted contacts found! Please add a contact.");
+                alert("No emergency contacts found! Please add a contact.");
                 return;
             }
 
             let emergencyContact = friends[0];
             let relatives = emergencyContact.relatives || [];
-            if (relatives.length < 3) {
-                alert("At least 3 relatives are required.");
+
+            if (relatives.length < 1) {
+                alert("At least 1 emergency contact is required.");
                 return;
             }
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        let latitude = position.coords.latitude;
-                        let longitude = position.coords.longitude;
-                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        let message = `🚨 *SOS Alert!* 🚨\nI need help! My location:\n${mapsLink}`;
+            let message = `🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
 
-                        relatives.slice(0, 3).forEach((rel) => {
-                            let phoneNumber = rel.phone.replace(/\s+/g, '');
-                            let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                            window.open(whatsappURL, "_blank");
-                        });
-                    },
-                    () => alert("Location access denied! Enable GPS.")
-                );
-            } else alert("Geolocation not supported.");
-        });
+            // Send to up to 3 emergency contacts
+            relatives.slice(0, 3).forEach((rel) => {
+                let phoneNumber = rel.phone.replace(/\s+/g, '');
+                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                setTimeout(() => {
+                    window.open(whatsappURL, "_blank");
+                }, 1000); // Small delay to avoid multiple tabs opening at once
+            });
 
-        // 🎤 Record & Send Audio via Vocaroo
-        let vocarooOpened = false;
-
-        document.getElementById("recordButton").addEventListener("click", function () {
-            vocarooOpened = true;  // Set flag to true
-            window.open("https://vocaroo.com/", "_blank");  // Open Vocaroo
-        });
-
-        // Detect when user returns to the page
-        document.addEventListener("visibilitychange", function () {
-            if (document.visibilityState === "visible" && vocarooOpened) {
-                let vocarooLink = prompt("Paste the Vocaroo audio link:");
-                if (vocarooLink) {
-                    let friends = JSON.parse(localStorage.getItem("friends")) || [];
-                    let emergencyContact = friends[0];
-                    let relatives = emergencyContact?.relatives || [];
-
-                    if (relatives.length === 0) {
-                        alert("No contacts found!");
-                        return;
-                    }
-
-                    let message = `🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
-
-                    // Automatically send WhatsApp messages
-                    relatives.slice(0, 3).forEach((rel) => {
-                        let phoneNumber = rel.phone.replace(/\s+/g, '');
-                        let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                        window.open(whatsappURL, "_blank");
-                    });
-
-                    vocarooOpened = false;  // Reset flag
-                }
-            }
-        });
+            alert("WhatsApp message is being sent!");
+        }
     </script>
+
 </body>
 </html>
