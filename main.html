@@ -73,16 +73,15 @@
         </div>
     </section>
 
-    <!-- SOS, Record & Help Buttons -->
+    <!-- SOS & Record Buttons -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
-    <button id="recordButton" class="sos-button">🎤 Record & Send</button>
     <button id="helpButton" class="sos-button">🆘 Help</button>
+    <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
     <!-- Options Grid -->
     <section class="options-grid">
         <div class="option big-option" onclick="window.location.href='location.html'">📍<span>TrackMe</span></div>
         <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
-        <div class="option big-option" onclick="loadContent('help')">🆘<span>Help</span></div>
         <div class="option big-option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍<span>Feedback</span></div>
         <div class="option big-option" onclick="window.location.href='laws.html'">📄<span>Legal</span></div>
         <div class="option big-option" onclick="window.location.href='helpline.html'">📞<span>Helpline</span></div>
@@ -99,27 +98,65 @@
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        // 🚨 SOS Button Logic (Google Maps Short Link)
+        // 🚨 SOS Button Logic - Sends LOCATION & MESSAGE via WhatsApp
         document.getElementById("sosButton").addEventListener("click", function () {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
-                        let mapsLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
                         let message = `🚨 *SOS Alert!* 🚨\nI need help! My location: ${mapsLink}`;
                         sendEmergencyMessage(message);
                     },
                     (error) => {
                         console.error("Geolocation error:", error);
-                        alert("Location access denied! Enable GPS and try again.");
+                        alert("❌ Location access denied! Enable GPS & allow location permissions.");
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                alert("Geolocation is not supported by your browser.");
+                alert("❌ Geolocation is not supported by your browser.");
             }
         });
+
+        // 🆘 Help Button - Sends Audio Evidence
+        document.getElementById("helpButton").addEventListener("click", function () {
+            let vocarooLink = localStorage.getItem("vocarooLink");
+
+            if (!vocarooLink) {
+                alert("❌ No saved audio link! Record & paste the link first.");
+                return;
+            }
+
+            let message = `🚨 *Help Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
+            sendEmergencyMessage(message);
+        });
+
+        // 📤 Function to Send Emergency Message via WhatsApp
+        function sendEmergencyMessage(message) {
+            let friends = JSON.parse(localStorage.getItem("friends")) || [];
+            if (friends.length === 0) {
+                alert("❌ No trusted contacts found! Please add a contact.");
+                return;
+            }
+
+            let emergencyContact = friends[0];
+            let relatives = emergencyContact?.relatives || [];
+
+            if (relatives.length < 3) {
+                alert("❌ At least 3 relatives are required.");
+                return;
+            }
+
+            relatives.slice(0, 3).forEach((rel) => {
+                let phoneNumber = rel.phone.replace(/\s+/g, '');
+                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                setTimeout(() => {
+                    window.open(whatsappURL, "_blank");
+                }, 1000);
+            });
+        }
 
         // 🎤 Record & Send Audio via Vocaroo
         let vocarooOpened = false;
@@ -132,58 +169,15 @@
         // Detect when user returns to the page
         document.addEventListener("visibilitychange", function () {
             if (document.visibilityState === "visible" && vocarooOpened) {
-                setTimeout(() => {
-                    let vocarooLink = prompt("Paste the Vocaroo audio link:");
-
-                    if (vocarooLink && vocarooLink.startsWith("https://voca.ro/")) {
-                        localStorage.setItem("vocarooLink", vocarooLink);
-                        alert("Audio link saved! Click 'Help' to send it.");
-                        vocarooOpened = false;
-                    } else {
-                        alert("Invalid Vocaroo link! Make sure it starts with 'https://voca.ro/'");
-                    }
-                }, 1000);
+                let vocarooLink = prompt("Paste the Vocaroo audio link:");
+                if (vocarooLink) {
+                    localStorage.setItem("vocarooLink", vocarooLink);
+                    alert("✅ Audio link saved! Click Help to send it.");
+                    vocarooOpened = false;
+                }
             }
         });
-
-        // 🔹 Help Button Logic (Sends Saved Audio Link)
-        document.getElementById("helpButton").addEventListener("click", function () {
-            let vocarooLink = localStorage.getItem("vocarooLink");
-
-            if (!vocarooLink) {
-                alert("No saved audio link! Please record and paste it first.");
-                return;
-            }
-
-            let message = `🚨 *Help Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
-            sendEmergencyMessage(message);
-        });
-
-        function sendEmergencyMessage(message) {
-            let friends = JSON.parse(localStorage.getItem("friends")) || [];
-            if (friends.length === 0) {
-                alert("No trusted contacts found! Please add a contact.");
-                return;
-            }
-
-            let emergencyContact = friends[0];
-            let relatives = emergencyContact?.relatives || [];
-
-            if (relatives.length < 3) {
-                alert("At least 3 relatives are required.");
-                return;
-            }
-
-            relatives.slice(0, 3).forEach((rel) => {
-                let phoneNumber = rel.phone.replace(/\s+/g, '');
-                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                setTimeout(() => {
-                    window.open(whatsappURL, "_blank");
-                }, 1000);
-            });
-        }
     </script>
+
 </body>
 </html>
-
-
