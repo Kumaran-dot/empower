@@ -26,6 +26,7 @@
         body {
             overflow: hidden;
             position: relative;
+            font-family: Arial, sans-serif;
         }
 
         /* SOS Button */
@@ -83,7 +84,6 @@
         <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
         <div class="option big-option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍<span>Feedback</span></div>
         <div class="option big-option" onclick="window.location.href='laws.html'">📄<span>Legal</span></div>
-        <div class="option big-option" onclick="loadContent('help')">🆘<span>Help</span></div>
         <div class="option big-option" onclick="window.location.href='helpline.html'">📞<span>Helpline</span></div>
         <div class="option big-option" onclick="window.location.href='about.html'">📖<span>About</span></div>
         <div class="option big-option" onclick="window.location.href='friends.html'">🤝<span>Friends</span></div>
@@ -99,18 +99,18 @@
             document.getElementById('userPhone').innerText = userPhone;
         };
 
+        // 📌 Send SOS Location via WhatsApp & SMS
         document.getElementById("sosButton").addEventListener("click", function () {
-            let friends = JSON.parse(localStorage.getItem("friends")) || [];
+            let contacts = JSON.parse(localStorage.getItem("friends")) || [];
 
-            if (friends.length === 0) {
+            if (contacts.length === 0) {
                 alert("No trusted contacts found! Please add a contact first.");
                 return;
             }
 
-            let emergencyContact = friends[0]; // First saved contact
-            let relatives = emergencyContact.relatives || []; // Get relatives list
+            let emergencyContacts = contacts[0]?.relatives || []; 
 
-            if (relatives.length < 3) {
+            if (emergencyContacts.length < 3) {
                 alert("You must have at least 3 relatives added to send an SOS message.");
                 return;
             }
@@ -121,50 +121,59 @@
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
                         let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My current location:\n${mapsLink}`;
+                        let message = `🚨 *SOS Alert!*\nI need help! My location:\n${mapsLink}`;
 
-                        relatives.slice(0, 3).forEach((rel) => {
+                        emergencyContacts.slice(0, 3).forEach((rel) => {
                             let phoneNumber = rel.phone.replace(/\s+/g, '');
                             let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
                             window.open(whatsappURL, "_blank");
                         });
                     },
-                    () => {
-                        alert("Location access denied! Please enable GPS.");
-                    }
+                    () => alert("Location access denied! Please enable GPS.")
                 );
             } else {
                 alert("Geolocation is not supported by this browser.");
             }
         });
 
+        // 📌 Record Audio and Send Link via WhatsApp
         document.getElementById("recordButton").addEventListener("click", function () {
             let chunks = [];
             navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
                 let recorder = new MediaRecorder(stream);
                 recorder.start();
+                alert("🎤 Recording started. Speak now...");
+
                 setTimeout(() => {
                     recorder.stop();
+                    alert("⏹️ Recording stopped. Uploading...");
                 }, 10000);
 
-                recorder.ondataavailable = (event) => {
+                recorder.ondataavailable = async (event) => {
                     chunks.push(event.data);
-                    let blob = new Blob(chunks, { type: 'audio/mp3' });
-                    let url = URL.createObjectURL(blob);
-                    let a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'sos_recording.mp3';
-                    a.click();
-                    
-                    let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nAudio Evidence Attached.`;
-                    let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
-                    relatives.slice(0, 3).forEach((rel) => {
-                        let phoneNumber = rel.phone.replace(/\s+/g, '');
-                        let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                        window.open(whatsappURL, "_blank");
-                    });
+                    let blob = new Blob(chunks, { type: "audio/mp3" });
+
+                    let formData = new FormData();
+                    formData.append("file", blob, "sos_audio.mp3");
+
+                    fetch("https://file.io", { method: "POST", body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            let fileLink = data.link;
+                            let message = `🚨 *SOS Alert!*\n🎤 Audio Evidence:\n${fileLink}`;
+                            let emergencyContacts = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
+
+                            emergencyContacts.slice(0, 3).forEach((rel) => {
+                                let phoneNumber = rel.phone.replace(/\s+/g, '');
+                                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                                window.open(whatsappURL, "_blank");
+                            });
+
+                        } else alert("❌ Failed to upload audio.");
+                    }).catch(() => alert("❌ Error uploading audio."));
                 };
-            });
+            }).catch(() => alert("🎤 Microphone access denied!"));
         });
     </script>
 </body>
