@@ -125,7 +125,7 @@
                             let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
                             setTimeout(() => {
                                 window.open(whatsappURL, "_blank");
-                            }, 1000); // Small delay to avoid popup block
+                            }, 1000);
                         });
                     },
                     () => alert("Location access denied! Enable GPS.")
@@ -137,38 +137,43 @@
         let vocarooOpened = false;
 
         document.getElementById("recordButton").addEventListener("click", function () {
-            vocarooOpened = true;  // Set flag to true
-            window.open("https://vocaroo.com/", "_blank");  // Open Vocaroo
+            vocarooOpened = true;
+            window.open("https://vocaroo.com/", "_blank");
         });
 
         // Detect when user returns to the page
         document.addEventListener("visibilitychange", function () {
             if (document.visibilityState === "visible" && vocarooOpened) {
-                let vocarooLink = prompt("Paste the Vocaroo audio link:");
-                if (vocarooLink) {
-                    let friends = JSON.parse(localStorage.getItem("friends")) || [];
-                    let emergencyContact = friends[0];
-                    let relatives = emergencyContact?.relatives || [];
+                setTimeout(() => {
+                    let vocarooLink = prompt("Paste the Vocaroo audio link:");
 
-                    if (relatives.length === 0) {
-                        alert("No contacts found!");
-                        return;
+                    if (vocarooLink && vocarooLink.startsWith("https://voca.ro/")) {
+                        let friends = JSON.parse(localStorage.getItem("friends")) || [];
+                        let emergencyContact = friends[0];
+                        let relatives = emergencyContact?.relatives || [];
+
+                        if (relatives.length === 0) {
+                            alert("No relatives found in emergency contacts!");
+                            return;
+                        }
+
+                        let message = `🚨 *SOS Alert! Audio From EmpowerHer* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
+
+                        relatives.slice(0, 3).forEach((rel) => {
+                            let phoneNumber = rel.phone.replace(/\s+/g, '');
+                            if (!phoneNumber.startsWith("+")) phoneNumber = "+91" + phoneNumber;
+
+                            let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                            setTimeout(() => {
+                                window.open(whatsappURL, "_blank");
+                            }, 1000);
+                        });
+
+                        vocarooOpened = false;
+                    } else {
+                        alert("Invalid Vocaroo link! Make sure it starts with 'https://voca.ro/'");
                     }
-
-                    let message = `🚨 *SOS Alert! Audio From EmpowerHer* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
-
-                    // ✅ Send to WhatsApp with a **delay** to avoid popup blocking
-                    relatives.slice(0, 3).forEach((rel, index) => {
-                        let phoneNumber = rel.phone.replace(/\s+/g, '');
-                        let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-
-                        setTimeout(() => {
-                            window.open(whatsappURL, "_blank");
-                        }, (index + 1) * 1000); // Delay each WhatsApp open by 1 second
-                    });
-
-                    vocarooOpened = false;  // Reset flag
-                }
+                }, 1000);
             }
         });
     </script>
