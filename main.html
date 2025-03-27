@@ -73,9 +73,10 @@
         </div>
     </section>
 
-    <!-- SOS & Record Buttons -->
+    <!-- SOS, Record & Help Buttons -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
+    <button id="helpButton" class="sos-button">🆘 Help</button>
 
     <!-- Options Grid -->
     <section class="options-grid">
@@ -99,46 +100,15 @@
 
         // 🚨 SOS Button Logic
         document.getElementById("sosButton").addEventListener("click", function () {
-            let friends = JSON.parse(localStorage.getItem("friends")) || [];
-            if (friends.length === 0) {
-                alert("No trusted contacts found! Please add a contact.");
-                return;
-            }
-
-            let emergencyContact = friends[0];
-            let relatives = emergencyContact.relatives || [];
-            if (relatives.length < 3) {
-                alert("At least 3 relatives are required.");
-                return;
-            }
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        let latitude = position.coords.latitude;
-                        let longitude = position.coords.longitude;
-                        let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        let message = `🚨 *SOS Alert!* 🚨\nI need help! My location:\n${mapsLink}`;
-
-                        relatives.slice(0, 3).forEach((rel) => {
-                            let phoneNumber = rel.phone.replace(/\s+/g, '');
-                            let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                            setTimeout(() => {
-                                window.open(whatsappURL, "_blank");
-                            }, 1000);
-                        });
-                    },
-                    () => alert("Location access denied! Enable GPS.")
-                );
-            } else alert("Geolocation not supported.");
+            sendEmergencyMessage("🚨 *SOS Alert!* 🚨\nI need help! My location:");
         });
 
         // 🎤 Record & Send Audio via Vocaroo
         let vocarooOpened = false;
 
         document.getElementById("recordButton").addEventListener("click", function () {
-            vocarooOpened = true;
-            window.open("https://vocaroo.com/", "_blank");
+            vocarooOpened = true;  
+            window.open("https://vocaroo.com/", "_blank");  
         });
 
         // Detect when user returns to the page
@@ -148,27 +118,8 @@
                     let vocarooLink = prompt("Paste the Vocaroo audio link:");
 
                     if (vocarooLink && vocarooLink.startsWith("https://voca.ro/")) {
-                        let friends = JSON.parse(localStorage.getItem("friends")) || [];
-                        let emergencyContact = friends[0];
-                        let relatives = emergencyContact?.relatives || [];
-
-                        if (relatives.length === 0) {
-                            alert("No relatives found in emergency contacts!");
-                            return;
-                        }
-
-                        let message = `🚨 *SOS Alert! Audio From EmpowerHer* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
-
-                        relatives.slice(0, 3).forEach((rel) => {
-                            let phoneNumber = rel.phone.replace(/\s+/g, '');
-                            if (!phoneNumber.startsWith("+")) phoneNumber = "+91" + phoneNumber;
-
-                            let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                            setTimeout(() => {
-                                window.open(whatsappURL, "_blank");
-                            }, 1000);
-                        });
-
+                        localStorage.setItem("vocarooLink", vocarooLink);
+                        alert("Audio link saved! Click 'Help' to send it.");
                         vocarooOpened = false;
                     } else {
                         alert("Invalid Vocaroo link! Make sure it starts with 'https://voca.ro/'");
@@ -176,6 +127,43 @@
                 }, 1000);
             }
         });
+
+        // 🔹 Help Button Logic (Sends Saved Audio Link)
+        document.getElementById("helpButton").addEventListener("click", function () {
+            let vocarooLink = localStorage.getItem("vocarooLink");
+
+            if (!vocarooLink) {
+                alert("No saved audio link! Please record and paste it first.");
+                return;
+            }
+
+            let message = `🚨 *Help Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
+            sendEmergencyMessage(message);
+        });
+
+        function sendEmergencyMessage(message) {
+            let friends = JSON.parse(localStorage.getItem("friends")) || [];
+            if (friends.length === 0) {
+                alert("No trusted contacts found! Please add a contact.");
+                return;
+            }
+
+            let emergencyContact = friends[0];
+            let relatives = emergencyContact?.relatives || [];
+
+            if (relatives.length < 3) {
+                alert("At least 3 relatives are required.");
+                return;
+            }
+
+            relatives.slice(0, 3).forEach((rel) => {
+                let phoneNumber = rel.phone.replace(/\s+/g, '');
+                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                setTimeout(() => {
+                    window.open(whatsappURL, "_blank");
+                }, 1000);
+            });
+        }
     </script>
 </body>
 </html>
