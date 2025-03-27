@@ -6,11 +6,13 @@
     <title>EmpowerHer - Women's Safety</title>
     <link rel="stylesheet" href="styleformain.css">
     <style>
+        /* Floating Bubble Effect */
         @keyframes float {
             0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
             50% { opacity: 1; }
             100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
         }
+
         .bubble {
             position: absolute;
             width: 30px;
@@ -20,10 +22,13 @@
             border-radius: 50%;
             animation: float 6s linear infinite;
         }
+
         body {
             overflow: hidden;
             position: relative;
         }
+
+        /* SOS Button */
         .sos-button {
             display: block;
             width: 200px;
@@ -40,6 +45,7 @@
     </style>
 </head>
 <body>
+    <!-- Bubble Animation Background -->
     <div class="bubbles">
         <div class="bubble"></div>
         <div class="bubble"></div>
@@ -49,10 +55,12 @@
         <div class="bubble"></div>
     </div>
 
+    <!-- Header -->
     <header class="header">
         <h1>EmpowerHer</h1>
     </header>
 
+    <!-- Profile Section -->
     <section class="profile-section">
         <div class="profile-container">
             <div class="profile">
@@ -65,9 +73,11 @@
         </div>
     </section>
 
+    <!-- SOS Button -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
+    <!-- Options Grid -->
     <section class="options-grid">
         <div class="option big-option" onclick="window.location.href='location.html'">📍<span>TrackMe</span></div>
         <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
@@ -96,8 +106,8 @@
                 return;
             }
 
-            let emergencyContact = friends[0];
-            let relatives = emergencyContact.relatives || [];
+            let emergencyContact = friends[0]; // First saved contact
+            let relatives = emergencyContact.relatives || []; // Get relatives list
 
             if (relatives.length < 3) {
                 alert("You must have at least 3 relatives added to send an SOS message.");
@@ -146,9 +156,15 @@
                     let formData = new FormData();
                     formData.append("file", blob, "sos_audio.mp3");
 
-                    fetch("https://store1.gofile.io/uploadFile", {
-                        method: "POST",
-                        body: formData
+                    // **Step 1: Get the GoFile.io server URL**
+                    fetch("https://api.gofile.io/getServer")
+                    .then(response => response.json())
+                    .then(serverData => {
+                        let server = serverData.data.server;
+                        let uploadURL = `https://${server}.gofile.io/uploadFile`;
+
+                        // **Step 2: Upload the audio to the fetched GoFile server**
+                        return fetch(uploadURL, { method: "POST", body: formData });
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -157,6 +173,7 @@
                             let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\n🎤 Audio Evidence:\n${fileLink}`;
                             let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
 
+                            // **Step 3: Send the WhatsApp alert**
                             relatives.slice(0, 3).forEach((rel) => {
                                 let phoneNumber = rel.phone.replace(/\s+/g, '');
                                 let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
