@@ -131,34 +131,31 @@
             } else alert("Geolocation not supported.");
         });
 
-        // 🎤 Record & Send Audio via SMS
+        // 🎤 Record & Send Audio via Vocaroo
+        let vocarooOpened = false;
+
         document.getElementById("recordButton").addEventListener("click", function () {
-            // Open Vocaroo for recording
-            window.open("https://vocaroo.com", "_blank");
+            vocarooOpened = true;  // Set flag to true
+            window.open("https://vocaroo.com/", "_blank");  // Open Vocaroo
+        });
 
-            setTimeout(() => {
-                let audioURL = prompt("Recording completed! Paste the Vocaroo link here:");
-
-                if (audioURL) {
-                    alert("Audio link saved! Click OK to send.");
-
-                    // Retrieve emergency contacts
+        // Detect when user returns to the page
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "visible" && vocarooOpened) {
+                let vocarooLink = prompt("Paste the Vocaroo audio link:");
+                if (vocarooLink) {
                     let friends = JSON.parse(localStorage.getItem("friends")) || [];
-                    if (friends.length === 0) {
-                        alert("No trusted contacts found! Please add a contact.");
-                        return;
-                    }
-
                     let emergencyContact = friends[0];
-                    let relatives = emergencyContact.relatives || [];
-                    if (relatives.length < 3) {
-                        alert("At least 3 relatives are required.");
+                    let relatives = emergencyContact?.relatives || [];
+
+                    if (relatives.length === 0) {
+                        alert("No contacts found!");
                         return;
                     }
 
-                    let message = `🚨 *SOS Alert!* 🚨\nI need help!\n🎤 Recorded Audio: ${audioURL}`;
+                    let message = `🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
 
-                    // Open SMS app with emergency message
+                    // Open SMS with the link
                     let smsNumber = relatives[0]?.phone.replace(/\s+/g, '');
                     let smsURL = `sms:${smsNumber}?body=${encodeURIComponent(message)}`;
                     window.open(smsURL, "_blank");
@@ -169,10 +166,11 @@
                         let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
                         window.open(whatsappURL, "_blank");
                     });
-                }
-            }, 5000); // Delay for user to record and copy link
-        });
 
+                    vocarooOpened = false;  // Reset flag
+                }
+            }
+        });
     </script>
 </body>
 </html>
