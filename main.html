@@ -6,29 +6,8 @@
     <title>EmpowerHer - Women's Safety</title>
     <link rel="stylesheet" href="styleformain.css">
     <style>
-        /* Floating Bubble Effect */
-        @keyframes float {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-        }
+        body { overflow: hidden; position: relative; }
 
-        .bubble {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: radial-gradient(circle, #ff4081, #6a1b9a);
-            opacity: 0.6;
-            border-radius: 50%;
-            animation: float 6s linear infinite;
-        }
-
-        body {
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* SOS Button */
         .sos-button {
             display: block;
             width: 200px;
@@ -42,25 +21,30 @@
             cursor: pointer;
             font-weight: bold;
         }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .option {
+            background: #6200ea;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <!-- Bubble Animation Background -->
-    <div class="bubbles">
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-        <div class="bubble"></div>
-    </div>
 
-    <!-- Header -->
-    <header class="header">
-        <h1>EmpowerHer</h1>
-    </header>
+    <header class="header"><h1>EmpowerHer</h1></header>
 
-    <!-- Profile Section -->
     <section class="profile-section">
         <div class="profile-container">
             <div class="profile">
@@ -73,44 +57,38 @@
         </div>
     </section>
 
-    <!-- SOS Buttons -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
     <!-- Options Grid -->
     <section class="options-grid">
-        <div class="option big-option" onclick="window.location.href='location.html'">📍<span>TrackMe</span></div>
-        <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
-        <div class="option big-option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍<span>Feedback</span></div>
-        <div class="option big-option" onclick="window.location.href='laws.html'">📄<span>Legal</span></div>
-        <div class="option big-option" onclick="window.location.href='helpline.html'">📞<span>Helpline</span></div>
-        <div class="option big-option" onclick="window.location.href='about.html'">📖<span>About</span></div>
-        <div class="option big-option" onclick="window.location.href='friends.html'">🤝<span>Friends</span></div>
-        <div class="option big-option" onclick="window.location.href='index.html'">↩<span>Log Out</span></div>
+        <div class="option" onclick="window.location.href='location.html'">📍 TrackMe</div>
+        <div class="option" onclick="window.location.href='addcontact.html'">☎ Add Contact</div>
+        <div class="option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍 Feedback</div>
+        <div class="option" onclick="window.location.href='laws.html'">📄 Legal</div>
+        <div class="option" onclick="window.location.href='helpline.html'">📞 Helpline</div>
+        <div class="option" onclick="window.location.href='about.html'">📖 About</div>
+        <div class="option" onclick="window.location.href='friends.html'">🤝 Friends</div>
+        <div class="option" onclick="window.location.href='index.html'">↩ Log Out</div>
     </section>
 
     <script>
         window.onload = function () {
-            const userName = localStorage.getItem('userName') || "User Name";
-            const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
-
-            document.getElementById('userName').innerText = userName;
-            document.getElementById('userPhone').innerText = userPhone;
+            document.getElementById('userName').innerText = localStorage.getItem('userName') || "User Name";
+            document.getElementById('userPhone').innerText = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
         };
 
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
-
             if (friends.length === 0) {
                 alert("No trusted contacts found! Please add a contact first.");
                 return;
             }
 
-            let emergencyContact = friends[0]; // First saved contact
-            let relatives = emergencyContact.relatives || []; // Get relatives list
-
+            let emergencyContact = friends[0];
+            let relatives = emergencyContact.relatives || [];
             if (relatives.length < 3) {
-                alert("You must have at least 3 relatives added to send an SOS message.");
+                alert("You must have at least 3 relatives added.");
                 return;
             }
 
@@ -120,7 +98,7 @@
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
                         let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My current location:\n${mapsLink}`;
+                        let message = `🚨 *SOS Alert!* 🚨\nI need help! My location:\n${mapsLink}`;
 
                         relatives.slice(0, 3).forEach((rel) => {
                             let phoneNumber = rel.phone.replace(/\s+/g, '');
@@ -128,13 +106,9 @@
                             window.open(whatsappURL, "_blank");
                         });
                     },
-                    () => {
-                        alert("Location access denied! Please enable GPS.");
-                    }
+                    () => alert("Location access denied! Please enable GPS.")
                 );
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
+            } else alert("Geolocation is not supported by this browser.");
         });
 
         document.getElementById("recordButton").addEventListener("click", function () {
@@ -152,27 +126,36 @@
                 recorder.ondataavailable = async (event) => {
                     chunks.push(event.data);
                     let blob = new Blob(chunks, { type: "audio/mp3" });
-
                     let formData = new FormData();
-                    formData.append("file", blob, "sos_audio.mp3");
+                    formData.append("audio", blob);
 
-                    fetch("https://file.io/", { method: "POST", body: formData })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                let fileLink = data.link;
-                                let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\n🎤 Audio Evidence:\n${fileLink}`;
-                                
-                                let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
-                                let phoneNumbers = relatives.slice(0, 3).map(rel => rel.phone.replace(/\s+/g, '')).join(",");
+                    // Upload to Vocaroo
+                    fetch("https://vocaroo.com/upload", {
+                        method: "POST",
+                        body: formData,
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            let audioLink = data.url;
+                            let message = `🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence:\n${audioLink}`;
+                            let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
 
-                                let smsURL = `sms:${phoneNumbers}?body=${encodeURIComponent(message)}`;
-                                window.location.href = smsURL;
-                            } else {
-                                alert("❌ Failed to upload audio.");
-                            }
-                        })
-                        .catch(() => alert("❌ Error uploading audio."));
+                            // Open SMS with the audio link
+                            let smsNumber = relatives[0]?.phone.replace(/\s+/g, '');
+                            let smsURL = `sms:${smsNumber}?body=${encodeURIComponent(message)}`;
+                            window.location.href = smsURL;
+
+                            // Send WhatsApp message
+                            relatives.slice(0, 3).forEach((rel) => {
+                                let phoneNumber = rel.phone.replace(/\s+/g, '');
+                                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                                window.open(whatsappURL, "_blank");
+                            });
+
+                        } else alert("❌ Failed to upload audio. Try again.");
+                    })
+                    .catch(error => console.error("Upload Error:", error));
                 };
             }).catch(() => alert("🎤 Microphone access denied!"));
         });
