@@ -153,9 +153,9 @@
                         return;
                     }
 
-                    let message = `🚨 *SOS Alert! Audio From EmpoerHer* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
+                    let message = `🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence: ${vocarooLink}`;
 
-                    // ✅ Send ONLY to WhatsApp (No SMS)
+                    // Automatically send WhatsApp messages
                     relatives.slice(0, 3).forEach((rel) => {
                         let phoneNumber = rel.phone.replace(/\s+/g, '');
                         let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
