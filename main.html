@@ -6,8 +6,29 @@
     <title>EmpowerHer - Women's Safety</title>
     <link rel="stylesheet" href="styleformain.css">
     <style>
-        body { overflow: hidden; position: relative; }
+        /* Floating Bubble Effect */
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
 
+        .bubble {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, #ff4081, #6a1b9a);
+            opacity: 0.6;
+            border-radius: 50%;
+            animation: float 6s linear infinite;
+        }
+
+        body {
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* SOS Button */
         .sos-button {
             display: block;
             width: 200px;
@@ -21,30 +42,25 @@
             cursor: pointer;
             font-weight: bold;
         }
-
-        /* Options Grid */
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .option {
-            background: #6200ea;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
+    <!-- Bubble Animation Background -->
+    <div class="bubbles">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
 
-    <header class="header"><h1>EmpowerHer</h1></header>
+    <!-- Header -->
+    <header class="header">
+        <h1>EmpowerHer</h1>
+    </header>
 
+    <!-- Profile Section -->
     <section class="profile-section">
         <div class="profile-container">
             <div class="profile">
@@ -57,38 +73,42 @@
         </div>
     </section>
 
+    <!-- SOS & Record Buttons -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
     <!-- Options Grid -->
     <section class="options-grid">
-        <div class="option" onclick="window.location.href='location.html'">📍 TrackMe</div>
-        <div class="option" onclick="window.location.href='addcontact.html'">☎ Add Contact</div>
-        <div class="option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍 Feedback</div>
-        <div class="option" onclick="window.location.href='laws.html'">📄 Legal</div>
-        <div class="option" onclick="window.location.href='helpline.html'">📞 Helpline</div>
-        <div class="option" onclick="window.location.href='about.html'">📖 About</div>
-        <div class="option" onclick="window.location.href='friends.html'">🤝 Friends</div>
-        <div class="option" onclick="window.location.href='index.html'">↩ Log Out</div>
+        <div class="option big-option" onclick="window.location.href='location.html'">📍<span>TrackMe</span></div>
+        <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
+        <div class="option big-option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍<span>Feedback</span></div>
+        <div class="option big-option" onclick="window.location.href='laws.html'">📄<span>Legal</span></div>
+        <div class="option big-option" onclick="window.location.href='helpline.html'">📞<span>Helpline</span></div>
+        <div class="option big-option" onclick="window.location.href='about.html'">📖<span>About</span></div>
+        <div class="option big-option" onclick="window.location.href='friends.html'">🤝<span>Friends</span></div>
+        <div class="option big-option" onclick="window.location.href='index.html'">↩<span>Log Out</span></div>
     </section>
 
     <script>
         window.onload = function () {
-            document.getElementById('userName').innerText = localStorage.getItem('userName') || "User Name";
-            document.getElementById('userPhone').innerText = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
+            const userName = localStorage.getItem('userName') || "User Name";
+            const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
+            document.getElementById('userName').innerText = userName;
+            document.getElementById('userPhone').innerText = userPhone;
         };
 
+        // 🚨 SOS Button Logic
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
             if (friends.length === 0) {
-                alert("No trusted contacts found! Please add a contact first.");
+                alert("No trusted contacts found! Please add a contact.");
                 return;
             }
 
             let emergencyContact = friends[0];
             let relatives = emergencyContact.relatives || [];
             if (relatives.length < 3) {
-                alert("You must have at least 3 relatives added.");
+                alert("At least 3 relatives are required.");
                 return;
             }
 
@@ -106,11 +126,12 @@
                             window.open(whatsappURL, "_blank");
                         });
                     },
-                    () => alert("Location access denied! Please enable GPS.")
+                    () => alert("Location access denied! Enable GPS.")
                 );
-            } else alert("Geolocation is not supported by this browser.");
+            } else alert("Geolocation not supported.");
         });
 
+        // 🎤 Record & Send Audio via SMS
         document.getElementById("recordButton").addEventListener("click", function () {
             let chunks = [];
             navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
@@ -126,36 +147,20 @@
                 recorder.ondataavailable = async (event) => {
                     chunks.push(event.data);
                     let blob = new Blob(chunks, { type: "audio/mp3" });
-                    let formData = new FormData();
-                    formData.append("audio", blob);
 
-                    // Upload to Vocaroo
-                    fetch("https://vocaroo.com/upload", {
-                        method: "POST",
-                        body: formData,
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            let audioLink = data.url;
-                            let message = `🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence:\n${audioLink}`;
-                            let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
+                    // Vocaroo Manual Upload Workaround
+                    alert("Go to https://vocaroo.com, upload manually, and share the link.");
 
-                            // Open SMS with the audio link
-                            let smsNumber = relatives[0]?.phone.replace(/\s+/g, '');
-                            let smsURL = `sms:${smsNumber}?body=${encodeURIComponent(message)}`;
-                            window.location.href = smsURL;
+                    let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
+                    if (relatives.length === 0) {
+                        alert("No contacts found!");
+                        return;
+                    }
 
-                            // Send WhatsApp message
-                            relatives.slice(0, 3).forEach((rel) => {
-                                let phoneNumber = rel.phone.replace(/\s+/g, '');
-                                let whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                                window.open(whatsappURL, "_blank");
-                            });
-
-                        } else alert("❌ Failed to upload audio. Try again.");
-                    })
-                    .catch(error => console.error("Upload Error:", error));
+                    // Open SMS app with a placeholder text
+                    let smsNumber = relatives[0]?.phone.replace(/\s+/g, '');
+                    let smsURL = `sms:${smsNumber}?body=🚨 *SOS Alert!* 🚨\n🎤 Audio Evidence (upload link here)`;
+                    window.open(smsURL, "_blank");
                 };
             }).catch(() => alert("🎤 Microphone access denied!"));
         });
