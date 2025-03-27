@@ -73,7 +73,7 @@
         </div>
     </section>
 
-    <!-- SOS Button -->
+    <!-- SOS Buttons -->
     <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
@@ -98,16 +98,17 @@
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        // 📍 SEND LOCATION VIA WHATSAPP
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
+
             if (friends.length === 0) {
                 alert("No trusted contacts found! Please add a contact first.");
                 return;
             }
 
-            let emergencyContact = friends[0];
-            let relatives = emergencyContact.relatives || [];
+            let emergencyContact = friends[0]; // First saved contact
+            let relatives = emergencyContact.relatives || []; // Get relatives list
+
             if (relatives.length < 3) {
                 alert("You must have at least 3 relatives added to send an SOS message.");
                 return;
@@ -136,7 +137,6 @@
             }
         });
 
-        // 🎤 RECORD AUDIO & SEND VIA SMS
         document.getElementById("recordButton").addEventListener("click", function () {
             let chunks = [];
             navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
@@ -156,22 +156,23 @@
                     let formData = new FormData();
                     formData.append("file", blob, "sos_audio.mp3");
 
-                    fetch("https://api.gofile.io/getServer")
-                    .then(response => response.json())
-                    .then(serverData => fetch(`https://${serverData.data.server}.gofile.io/uploadFile`, { method: "POST", body: formData }))
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === "ok") {
-                            let fileLink = data.data.downloadPage;
-                            let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\n🎤 Audio Evidence:\n${fileLink}`;
-                            let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
-                            let phoneNumbers = relatives.slice(0, 3).map(rel => rel.phone.replace(/\s+/g, '')).join(",");
-                            let smsURL = `sms:${phoneNumbers}?body=${encodeURIComponent(message)}`;
-                            window.location.href = smsURL;
-                        } else {
-                            alert("❌ Failed to upload audio.");
-                        }
-                    }).catch(() => alert("❌ Error uploading audio."));
+                    fetch("https://file.io/", { method: "POST", body: formData })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                let fileLink = data.link;
+                                let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\n🎤 Audio Evidence:\n${fileLink}`;
+                                
+                                let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
+                                let phoneNumbers = relatives.slice(0, 3).map(rel => rel.phone.replace(/\s+/g, '')).join(",");
+
+                                let smsURL = `sms:${phoneNumbers}?body=${encodeURIComponent(message)}`;
+                                window.location.href = smsURL;
+                            } else {
+                                alert("❌ Failed to upload audio.");
+                            }
+                        })
+                        .catch(() => alert("❌ Error uploading audio."));
                 };
             }).catch(() => alert("🎤 Microphone access denied!"));
         });
