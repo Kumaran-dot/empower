@@ -12,6 +12,7 @@
             50% { opacity: 1; }
             100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
         }
+
         .bubble {
             position: absolute;
             width: 30px;
@@ -21,7 +22,12 @@
             border-radius: 50%;
             animation: float 6s linear infinite;
         }
-        body { overflow: hidden; position: relative; }
+
+        body {
+            overflow: hidden;
+            position: relative;
+        }
+
         /* SOS Button */
         .sos-button {
             display: block;
@@ -39,7 +45,6 @@
     </style>
 </head>
 <body>
-
     <!-- Bubble Animation Background -->
     <div class="bubbles">
         <div class="bubble"></div>
@@ -69,7 +74,7 @@
     </section>
 
     <!-- SOS Button -->
-    <button id="sosButton" class="sos-button">🚨 Send Location</button>
+    <button id="sosButton" class="sos-button">🚨 SOS</button>
     <button id="recordButton" class="sos-button">🎤 Record & Send</button>
 
     <!-- Options Grid -->
@@ -88,11 +93,12 @@
         window.onload = function () {
             const userName = localStorage.getItem('userName') || "User Name";
             const userPhone = localStorage.getItem('userPhone') || "+91 XXXXX XXXXX";
+
             document.getElementById('userName').innerText = userName;
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        // 🚨 SEND LOCATION VIA WHATSAPP
+        // 📍 SEND LOCATION VIA WHATSAPP
         document.getElementById("sosButton").addEventListener("click", function () {
             let friends = JSON.parse(localStorage.getItem("friends")) || [];
             if (friends.length === 0) {
@@ -113,7 +119,7 @@
                         let latitude = position.coords.latitude;
                         let longitude = position.coords.longitude;
                         let mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My location:\n${mapsLink}`;
+                        let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\nI need help! My current location:\n${mapsLink}`;
 
                         relatives.slice(0, 3).forEach((rel) => {
                             let phoneNumber = rel.phone.replace(/\s+/g, '');
@@ -121,7 +127,9 @@
                             window.open(whatsappURL, "_blank");
                         });
                     },
-                    () => alert("Location access denied! Please enable GPS.")
+                    () => {
+                        alert("Location access denied! Please enable GPS.");
+                    }
                 );
             } else {
                 alert("Geolocation is not supported by this browser.");
@@ -150,25 +158,16 @@
 
                     fetch("https://api.gofile.io/getServer")
                     .then(response => response.json())
-                    .then(serverData => {
-                        let server = serverData.data.server;
-                        return fetch(`https://${server}.gofile.io/uploadFile`, { method: "POST", body: formData });
-                    })
+                    .then(serverData => fetch(`https://${serverData.data.server}.gofile.io/uploadFile`, { method: "POST", body: formData }))
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === "ok") {
                             let fileLink = data.data.downloadPage;
                             let message = `🚨 *SOS Alert! From EmpowerHer* 🚨\n🎤 Audio Evidence:\n${fileLink}`;
-
-                            let friends = JSON.parse(localStorage.getItem("friends")) || [];
-                            if (friends.length === 0) {
-                                alert("No trusted contacts found! Please add a contact first.");
-                                return;
-                            }
-
-                            let phoneNumber = friends[0].relatives[0].phone.replace(/\s+/g, '');
-                            window.open(`sms:${phoneNumber}?body=${encodeURIComponent(message)}`, "_self");
-
+                            let relatives = JSON.parse(localStorage.getItem("friends"))[0]?.relatives || [];
+                            let phoneNumbers = relatives.slice(0, 3).map(rel => rel.phone.replace(/\s+/g, '')).join(",");
+                            let smsURL = `sms:${phoneNumbers}?body=${encodeURIComponent(message)}`;
+                            window.location.href = smsURL;
                         } else {
                             alert("❌ Failed to upload audio.");
                         }
@@ -177,6 +176,5 @@
             }).catch(() => alert("🎤 Microphone access denied!"));
         });
     </script>
-
 </body>
 </html>
