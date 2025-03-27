@@ -82,6 +82,7 @@
     <section class="options-grid">
         <div class="option big-option" onclick="window.location.href='location.html'">📍<span>TrackMe</span></div>
         <div class="option big-option" onclick="window.location.href='addcontact.html'">☎<span>Add Contact</span></div>
+        <div class="option big-option" onclick="loadContent('help')">🆘<span>Help</span></div>
         <div class="option big-option" onclick="window.open('https://forms.gle/PMZR5za2pAv9HrRR8', '_blank')">👍<span>Feedback</span></div>
         <div class="option big-option" onclick="window.location.href='laws.html'">📄<span>Legal</span></div>
         <div class="option big-option" onclick="window.location.href='helpline.html'">📞<span>Helpline</span></div>
@@ -98,17 +99,34 @@
             document.getElementById('userPhone').innerText = userPhone;
         };
 
-        // 🚨 SOS Button Logic
+        // 🚨 SOS Button Logic (Google Maps Short Link)
         document.getElementById("sosButton").addEventListener("click", function () {
-            sendEmergencyMessage("🚨 *SOS Alert!* 🚨\nI need help! My location:");
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let latitude = position.coords.latitude;
+                        let longitude = position.coords.longitude;
+                        let mapsLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+                        let message = `🚨 *SOS Alert!* 🚨\nI need help! My location: ${mapsLink}`;
+                        sendEmergencyMessage(message);
+                    },
+                    (error) => {
+                        console.error("Geolocation error:", error);
+                        alert("Location access denied! Enable GPS and try again.");
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
         });
 
         // 🎤 Record & Send Audio via Vocaroo
         let vocarooOpened = false;
 
         document.getElementById("recordButton").addEventListener("click", function () {
-            vocarooOpened = true;  
-            window.open("https://vocaroo.com/", "_blank");  
+            vocarooOpened = true;
+            window.open("https://vocaroo.com/", "_blank");
         });
 
         // Detect when user returns to the page
